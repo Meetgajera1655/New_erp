@@ -2,6 +2,7 @@ import abc
 from typing import Dict, Any
 
 from app.services.branch_management_service import BranchManagementService
+from app.services.financial_service import FinancialService
 from app.api.dashboard.cache import ttl_cache
 
 class BaseDashboardAdapter(abc.ABC):
@@ -43,11 +44,24 @@ class BranchManagementAdapter(BaseDashboardAdapter):
         return BranchManagementService.get_branch_charts(db, schema)
         
     def get_tables(self, db, schema: str) -> Dict[str, Any]:
-        # Tables aren't cached as they represent paginated detailed views
         return BranchManagementService.get_branch_tables(db, schema)
 
     def get_alerts(self, db, schema: str) -> Dict[str, Any]:
         return BranchManagementService.get_branch_alerts(db, schema)
+
+
+class FinancialAdapter(BaseDashboardAdapter):
+    
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str) -> Dict[str, Any]:
+        return {}  # Financial service has no explicit KPIs block
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str) -> Dict[str, Any]:
+        return FinancialService.get_charts(db, schema)
+        
+    def get_tables(self, db, schema: str) -> Dict[str, Any]:
+        return FinancialService.get_tables(db, schema)
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +69,7 @@ class BranchManagementAdapter(BaseDashboardAdapter):
 # ---------------------------------------------------------------------------
 REGISTRY: Dict[str, BaseDashboardAdapter] = {
     "branch_management": BranchManagementAdapter(),
+    "financial": FinancialAdapter(),
     # To migrate another module, simply create a minimal adapter like above 
     # and link its string identifier here. No SQL modifications required!
 }

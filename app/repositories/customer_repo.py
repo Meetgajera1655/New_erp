@@ -9,7 +9,7 @@ class CustomerRepository:
         return db.execute(text(f"""
             SELECT COUNT(id)
             FROM "{schema}".customers
-            WHERE is_deleted = FALSE
+            WHERE status IN ('ACTIVE', 'INACTIVE')
         """)).scalar()
 
     @staticmethod
@@ -17,7 +17,7 @@ class CustomerRepository:
         return db.execute(text(f"""
             SELECT COUNT(id)
             FROM "{schema}".customers
-            WHERE status = 'Active'
+            WHERE status = 'ACTIVE'
         """)).scalar()
 
     @staticmethod
@@ -26,6 +26,7 @@ class CustomerRepository:
             SELECT COUNT(id)
             FROM "{schema}".customers
             WHERE customer_type = 'Contract'
+            AND status IN ('ACTIVE', 'INACTIVE')
         """)).scalar()
 
     @staticmethod
@@ -42,7 +43,7 @@ class CustomerRepository:
         return db.execute(text(f"""
             SELECT customer_type, COUNT(id)
             FROM "{schema}".customers
-            WHERE is_deleted = FALSE
+            WHERE status IN ('ACTIVE', 'INACTIVE')
             GROUP BY customer_type
         """)).fetchall()
 
@@ -53,7 +54,7 @@ class CustomerRepository:
             FROM "{schema}".customers c
             JOIN "{schema}".branches b
             ON c.branch_id = b.id
-            WHERE c.is_deleted = FALSE
+            WHERE c.status IN ('ACTIVE', 'INACTIVE')
             GROUP BY b.branch_name
             ORDER BY COUNT(c.id) DESC
         """)).fetchall()
@@ -63,7 +64,7 @@ class CustomerRepository:
         return db.execute(text(f"""
             SELECT DATE_TRUNC('month', created_at), COUNT(id)
             FROM "{schema}".customers
-            WHERE is_deleted = FALSE
+            WHERE status IN ('ACTIVE', 'INACTIVE')
             GROUP BY DATE_TRUNC('month', created_at)
             ORDER BY DATE_TRUNC('month', created_at)
         """)).fetchall()
@@ -78,7 +79,7 @@ class CustomerRepository:
         FROM "{schema}".customers c
         JOIN "{schema}".branches b
         ON c.branch_id = b.id
-        WHERE c.is_deleted = FALSE
+        WHERE c.status IN ('ACTIVE', 'INACTIVE')
         ORDER BY c.created_at DESC
         LIMIT 10
     """)).fetchall()
@@ -93,7 +94,7 @@ class CustomerRepository:
         JOIN "{schema}".contracts con
         ON c.id = con.customer_id
         WHERE con.status = 'ACTIVE'
-        AND c.is_deleted = FALSE
+        AND c.status IN ('ACTIVE', 'INACTIVE')
     """)).fetchall()
 
     # ================= ALERTS =================
@@ -104,7 +105,6 @@ class CustomerRepository:
         SELECT id, full_name, customer_type, branch_id, status
         FROM "{schema}".customers
         WHERE status = 'INACTIVE'
-        AND is_deleted = FALSE
     """)).fetchall()
 
     @staticmethod
@@ -115,5 +115,5 @@ class CustomerRepository:
         LEFT JOIN "{schema}".contracts con
         ON c.id = con.customer_id
         WHERE con.customer_id IS NULL
-        AND c.is_deleted = FALSE
+        AND c.status IN ('ACTIVE', 'INACTIVE')
     """)).fetchall()

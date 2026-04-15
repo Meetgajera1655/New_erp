@@ -43,9 +43,7 @@ class LeadRepository:
 
     # ================= CHARTS =================
 
-  
-
-class LeadRepository:
+    # ----------------------------------------------------
 
     @staticmethod
     def status_wise_leads(db, schema):

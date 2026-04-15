@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.auth import get_current_tenant
+from app.utils.auth import get_current_tenant, verify_dashboard_access
 
 from app.api.dashboard.registry import get_adapter
 from app.api.dashboard.models import (
@@ -47,12 +47,17 @@ async def get_unified_dashboard(
         default=None,
         description="Comma-separated list of table IDs. If passed, only these tables are returned."
     ),
-    tenant: str = Depends(get_current_tenant),
+    auth_ctx: dict = Depends(verify_dashboard_access),
     db: Session = Depends(get_db),
 ):
     """
     Unified Orchestrating Endpoint for dashboard loading.
+    Strict Mode: Multi-role DB check against dashboard_name via verify_dashboard_access.
     """
+    tenant = auth_ctx["tenant"]
+    role = auth_ctx["role"]
+    allowed_modules = auth_ctx.get("allowed_modules", [])
+    
     adapter = get_adapter(dashboard_name)
     if not adapter:
         raise HTTPException(status_code=404, detail=f"Dashboard '{dashboard_name}' is not registered.")
@@ -63,7 +68,7 @@ async def get_unified_dashboard(
     if table:
         # 1. Fetch raw table sets from the existing service layer
         # (This bypasses KPIs & Charts execution entirely)
-        all_tables_dict = adapter.get_tables(db, tenant)
+        all_tables_dict = adapter.get_tables(db, tenant, allowed_modules)
         
         requested_ids = [t.strip() for t in table.split(",") if t.strip()]
         
@@ -102,9 +107,9 @@ async def get_unified_dashboard(
             raise HTTPException(status_code=404, detail="None of the requested tables were found.")
             
         if len(requested_ids) == 1:
-            return DashboardTableResponseSingle(table=payloads[0])
+            return DashboardTableResponseSingle(role=role, access="granted", modules=allowed_modules, table=payloads[0])
         else:
-            return DashboardTableResponseMultiple(tables=payloads)
+            return DashboardTableResponseMultiple(role=role, access="granted", modules=allowed_modules, tables=payloads)
 
     # ------------------------------------------------------------------ #
     # BRANCH B: Default Dashboard Load (KPIs + Charts Only)
@@ -113,11 +118,14 @@ async def get_unified_dashboard(
         # Note: We run these sequentially because SQLAlchemy Session is NOT thread-safe.
         # Passing `db` to different threads via `asyncio.to_thread` causes IllegalStateChangeError.
         # The TTL caching we added drops response times to <2s on subsequent loads anyway.
-        kpis = adapter.get_kpis(db, tenant)
-        charts = adapter.get_charts(db, tenant)
+        kpis = adapter.get_kpis(db, tenant, allowed_modules)
+        charts = adapter.get_charts(db, tenant, allowed_modules)
         
         return DashboardStandardResponse(
             dashboard=dashboard_name,
+            role=role,
+            access="granted",
+            modules=allowed_modules,
             kpis=kpis,
             charts=charts
         )

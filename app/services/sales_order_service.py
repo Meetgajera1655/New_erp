@@ -3,33 +3,33 @@ from app.repositories.sales_order_repository import SalesOrderRepository
 class SalesOrderService:
 
     @staticmethod
-    def get_kpi(db, schema):
+    def get_kpi(db, schema, **kwargs):
         return {
-          "total_orders": SalesOrderRepository.total_orders(db, schema),
-            "total_amount": float(SalesOrderRepository.total_amount(db, schema)),
-            "open_orders": SalesOrderRepository.open_orders(db, schema),
-            "completed_orders": SalesOrderRepository.completed_orders(db, schema),
+          "total_orders": SalesOrderRepository.total_orders(db, schema, **kwargs),
+            "total_amount": float(SalesOrderRepository.total_amount(db, schema, **kwargs)),
+            "open_orders": SalesOrderRepository.open_orders(db, schema, **kwargs),
+            "completed_orders": SalesOrderRepository.completed_orders(db, schema, **kwargs),
         }
 
     @staticmethod
-    def get_charts(db, schema):
+    def get_charts(db, schema, **kwargs):
         return {
             "status_chart": [
                 {"status": r[0], "count": r[1]}
-                for r in SalesOrderRepository.status_chart(db, schema)
+                for r in SalesOrderRepository.status_chart(db, schema, **kwargs)
             ],
             "monthly_revenue": [
                 {"month": str(r[0]), "revenue": float(r[1] or 0)}
-                for r in SalesOrderRepository.monthly_revenue(db, schema)
+                for r in SalesOrderRepository.monthly_revenue(db, schema, **kwargs)
             ],
             "branch_sales": [
                 {"branch": r[0], "amount": float(r[1] or 0)}
-                for r in SalesOrderRepository.branch_sales(db, schema)
+                for r in SalesOrderRepository.branch_sales(db, schema, **kwargs)
             ]
         }
 
     @staticmethod
-    def get_tables(db, schema):
+    def get_tables(db, schema, **kwargs):
         return {
             "recent_orders": [
                 {
@@ -41,12 +41,12 @@ class SalesOrderService:
                     "branch": r[5],
                     "created_at": str(r[6])
                 }
-                for r in SalesOrderRepository.recent_orders(db, schema)
+                for r in SalesOrderRepository.recent_orders(db, schema, **kwargs)
             ]
         }
 
     @staticmethod
-    def get_alerts(db, schema):
+    def get_alerts(db, schema, **kwargs):
         return {
             "high_value_orders": [
                 {
@@ -56,7 +56,7 @@ class SalesOrderService:
                     "status": r[3],
                     "created_at": str(r[4])
                 }
-                for r in SalesOrderRepository.high_value_orders(db, schema)
+                for r in SalesOrderRepository.high_value_orders(db, schema, **kwargs)
             ],
             "pending_orders": [
                 {
@@ -65,6 +65,6 @@ class SalesOrderService:
                     "status": r[2],
                     "created_at": str(r[3])
                 }
-                for r in SalesOrderRepository.pending_orders(db, schema)
+                for r in SalesOrderRepository.pending_orders(db, schema, **kwargs)
             ]
         }

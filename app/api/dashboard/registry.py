@@ -25,18 +25,18 @@ class BaseDashboardAdapter(abc.ABC):
     """Abstract adapter defining the expected interface for any dashboard."""
     
     @abc.abstractmethod
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
         pass
 
     @abc.abstractmethod
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
         pass
 
     @abc.abstractmethod
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
         pass
 
-    def get_alerts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
         return {}
 
 
@@ -48,18 +48,18 @@ class StandardAdapter(BaseDashboardAdapter):
         self.service = service_class
 
     @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return getattr(self.service, "get_kpi", lambda d, s: {})(db, schema)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return getattr(self.service, "get_kpi", lambda d, s, **k: {})(db, schema, **kwargs)
         
     @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return getattr(self.service, "get_charts", lambda d, s: {})(db, schema)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return getattr(self.service, "get_charts", lambda d, s, **k: {})(db, schema, **kwargs)
         
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return getattr(self.service, "get_tables", lambda d, s: {})(db, schema)
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return getattr(self.service, "get_tables", lambda d, s, **k: {})(db, schema, **kwargs)
 
-    def get_alerts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return getattr(self.service, "get_alerts", lambda d, s: {})(db, schema)
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return getattr(self.service, "get_alerts", lambda d, s, **k: {})(db, schema, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -67,78 +67,197 @@ class StandardAdapter(BaseDashboardAdapter):
 # ---------------------------------------------------------------------------
 class BranchManagementAdapter(BaseDashboardAdapter):
     @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return BranchManagementService.get_dashboard_kpi(db, schema)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return BranchManagementService.get_dashboard_kpi(db, schema, **kwargs)
         
     @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return BranchManagementService.get_branch_charts(db, schema)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return BranchManagementService.get_branch_charts(db, schema, **kwargs)
         
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return BranchManagementService.get_branch_tables(db, schema)
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return BranchManagementService.get_branch_tables(db, schema, **kwargs)
 
-    def get_alerts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return BranchManagementService.get_branch_alerts(db, schema)
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return BranchManagementService.get_branch_alerts(db, schema, **kwargs)
 
 
 class FinancialAdapter(BaseDashboardAdapter):
     @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return getattr(FinancialService, "get_kpis", lambda d, s: {})(db, schema)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return getattr(FinancialService, "get_kpis", lambda d, s, **k: {})(db, schema, **kwargs)
         
     @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return FinancialService.get_charts(db, schema)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return FinancialService.get_charts(db, schema, **kwargs)
         
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return FinancialService.get_tables(db, schema)
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return FinancialService.get_tables(db, schema, **kwargs)
 
 
 class InventoryAdapter(BaseDashboardAdapter):
     @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return InventoryService.get_inventory_kpi(db, schema, allowed_modules)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return InventoryService.get_inventory_kpi(db, schema, allowed_modules, **kwargs)
         
     @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return InventoryService.get_inventory_charts(db, schema, allowed_modules)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return InventoryService.get_inventory_charts(db, schema, allowed_modules, **kwargs)
         
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return InventoryService.get_inventory_tables(db, schema, allowed_modules)
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return InventoryService.get_inventory_tables(db, schema, allowed_modules, **kwargs)
 
-    def get_alerts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return InventoryService.get_inventory_alerts(db, schema, allowed_modules)
-
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return InventoryService.get_inventory_alerts(db, schema, allowed_modules, **kwargs)
 
 class VendorAdapter(BaseDashboardAdapter):
     @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return VendorService.get_vendor_kpi(db, schema)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return VendorService.get_vendor_kpi(db, schema, **kwargs)
         
     @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return VendorService.get_vendor_charts(db, schema)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return VendorService.get_vendor_charts(db, schema, **kwargs)
         
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return VendorService.get_vendor_tables(db, schema)
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return VendorService.get_vendor_tables(db, schema, **kwargs)
 
-    def get_alerts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return VendorService.get_vendor_alerts(db, schema)
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return VendorService.get_vendor_alerts(db, schema, **kwargs)
 
 class LeadAdapter(BaseDashboardAdapter):
     @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return LeadService.get_kpi(db, schema, allowed_modules)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return LeadService.get_kpi(db, schema, allowed_modules, **kwargs)
         
     @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return LeadService.get_charts(db, schema, allowed_modules)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return LeadService.get_charts(db, schema, allowed_modules, **kwargs)
         
-    def get_tables(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return LeadService.get_tables(db, schema, allowed_modules)
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return LeadService.get_tables(db, schema, allowed_modules, **kwargs)
 
-    def get_alerts(self, db, schema: str, allowed_modules: list = None) -> Dict[str, Any]:
-        return LeadService.get_alerts(db, schema, allowed_modules)
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return LeadService.get_alerts(db, schema, allowed_modules, **kwargs)
+
+class SalesOrderAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SalesOrderService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SalesOrderService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SalesOrderService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SalesOrderService.get_alerts(db, schema, **kwargs)
+
+class PurchaseAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return PurchaseService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return PurchaseService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return PurchaseService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return PurchaseService.get_alerts(db, schema, **kwargs)
+
+class QuotationAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return QuotationService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return QuotationService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return QuotationService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return QuotationService.get_alerts(db, schema, **kwargs)
+
+class CustomerAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return CustomerService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return CustomerService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return CustomerService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return CustomerService.get_alerts(db, schema, **kwargs)
+
+class ContractAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return ContractService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return ContractService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return ContractService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return ContractService.get_alerts(db, schema, **kwargs)
+
+class SupportAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SupportService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SupportService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SupportService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return SupportService.get_alerts(db, schema, **kwargs)
+
+class GMAAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return GMAService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return GMAService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return GMAService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return GMAService.get_alerts(db, schema, **kwargs)
+
+class TaskAdapter(BaseDashboardAdapter):
+    @ttl_cache(ttl_seconds=60)
+    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return TaskService.get_kpi(db, schema, **kwargs)
+        
+    @ttl_cache(ttl_seconds=60)
+    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return TaskService.get_charts(db, schema, **kwargs)
+        
+    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return TaskService.get_tables(db, schema, **kwargs)
+
+    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+        return TaskService.get_alerts(db, schema, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -151,16 +270,14 @@ REGISTRY: Dict[str, BaseDashboardAdapter] = {
     "inventory": InventoryAdapter(),
     "vendor_management": VendorAdapter(),
     "lead_followup": LeadAdapter(),
-
-    # Standardized Methods
-    "sales_order": StandardAdapter(SalesOrderService),
-    "purchase": StandardAdapter(PurchaseService),
-    "quotation": StandardAdapter(QuotationService),
-    "customer_management": StandardAdapter(CustomerService),
-    "contract_management": StandardAdapter(ContractService),
-    "customer_support": StandardAdapter(SupportService),
-    "gma": StandardAdapter(GMAService),
-    "task_management": StandardAdapter(TaskService),
+    "sales_order": SalesOrderAdapter(),
+    "purchase": PurchaseAdapter(),
+    "quotation": QuotationAdapter(),
+    "customer_management": CustomerAdapter(),
+    "contract_management": ContractAdapter(),
+    "customer_support": SupportAdapter(),
+    "gma": GMAAdapter(),
+    "task_management": TaskAdapter(),
     "employee_management": StandardAdapter(EmployeeService),
     "hrm": StandardAdapter(HRMService),
     "petty_cash": StandardAdapter(PettyCashService),

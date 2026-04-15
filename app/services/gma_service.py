@@ -4,35 +4,35 @@ class GMAService:
 
     # KPI
     @staticmethod
-    def get_kpi(db, schema):
+    def get_kpi(db, schema, **kwargs):
         return {
-            "total_gma_sheets": GMARepository.total_gma(db, schema),
-            "approved_gma_sheets": GMARepository.approved_gma(db, schema),
-            "pending_gma_sheets": GMARepository.pending_gma(db, schema),
-            "avg_gross_margin": round(GMARepository.avg_margin(db, schema), 2)
+            "total_gma_sheets": GMARepository.total_gma(db, schema, **kwargs),
+            "approved_gma_sheets": GMARepository.approved_gma(db, schema, **kwargs),
+            "pending_gma_sheets": GMARepository.pending_gma(db, schema, **kwargs),
+            "avg_gross_margin": round(GMARepository.avg_margin(db, schema, **kwargs), 2)
         }
 
     # Charts
     @staticmethod
-    def get_charts(db, schema):
+    def get_charts(db, schema, **kwargs):
         return {
             "status_distribution": [
                 {"status": r[0], "count": r[1]}
-                for r in GMARepository.status_distribution(db, schema)
+                for r in GMARepository.status_distribution(db, schema, **kwargs)
             ],
             "branch_gma": [
                 {"branch": r[0], "count": r[1]}
-                for r in GMARepository.branch_gma(db, schema)
+                for r in GMARepository.branch_gma(db, schema, **kwargs)
             ],
             "monthly_gma": [
                 {"month": str(r[0]), "count": r[1]}
-                for r in GMARepository.monthly_gma(db, schema)
+                for r in GMARepository.monthly_gma(db, schema, **kwargs)
             ]
         }
 
     # Tables
     @staticmethod
-    def get_tables(db, schema):
+    def get_tables(db, schema, **kwargs):
         return {
             "recent_gma": [
                 {
@@ -45,7 +45,7 @@ class GMAService:
                     "status": r[6],
                     "created_at": str(r[7])
                 }
-                for r in GMARepository.recent_gma(db, schema)
+                for r in GMARepository.recent_gma(db, schema, **kwargs)
             ],
             "approved_summary": [
                 {
@@ -57,13 +57,13 @@ class GMAService:
                     "visits": r[5],
                     "approved_on": str(r[6])
                 }
-                for r in GMARepository.approved_summary(db, schema)
+                for r in GMARepository.approved_summary(db, schema, **kwargs)
             ]
         }
 
     # Alerts
     @staticmethod
-    def get_alerts(db, schema):
+    def get_alerts(db, schema, **kwargs):
         return {
             "pending_approval": [
                 {
@@ -73,7 +73,7 @@ class GMAService:
                     "deadline": str(r[3]),
                     "created_at": str(r[4])
                 }
-                for r in GMARepository.pending_alert(db, schema)
+                for r in GMARepository.pending_alert(db, schema, **kwargs)
             ],
             "low_margin": [
                 {
@@ -83,6 +83,6 @@ class GMAService:
                     "margin": r[3],
                     "status": r[4]
                 }
-                for r in GMARepository.low_margin(db, schema)
+                for r in GMARepository.low_margin(db, schema, **kwargs)
             ]
         }

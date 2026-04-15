@@ -4,35 +4,35 @@ class CustomerService:
 
     # KPI
     @staticmethod
-    def get_kpi(db, schema):
+    def get_kpi(db, schema, **kwargs):
         return {
-            "total_customers": CustomerRepository.total_customers(db, schema),
-            "active_customers": CustomerRepository.active_customers(db, schema),
-            "contract_customers": CustomerRepository.contract_customers(db, schema),
-            "total_revenue": CustomerRepository.total_revenue(db, schema)
+            "total_customers": CustomerRepository.total_customers(db, schema, **kwargs),
+            "active_customers": CustomerRepository.active_customers(db, schema, **kwargs),
+            "contract_customers": CustomerRepository.contract_customers(db, schema, **kwargs),
+            "total_revenue": CustomerRepository.total_revenue(db, schema, **kwargs)
         }
 
     # Charts
     @staticmethod
-    def get_charts(db, schema):
+    def get_charts(db, schema, **kwargs):
         return {
             "customer_type": [
                 {"type": r[0], "count": r[1]}
-                for r in CustomerRepository.customer_type(db, schema)
+                for r in CustomerRepository.customer_type(db, schema, **kwargs)
             ],
             "branch_customers": [
                 {"branch": r[0], "count": r[1]}
-                for r in CustomerRepository.branch_customers(db, schema)
+                for r in CustomerRepository.branch_customers(db, schema, **kwargs)
             ],
             "monthly_trend": [
                 {"month": str(r[0]), "count": r[1]}
-                for r in CustomerRepository.monthly_customers(db, schema)
+                for r in CustomerRepository.monthly_customers(db, schema, **kwargs)
             ]
         }
 
     # Tables
     @staticmethod
-    def get_tables(db, schema):
+    def get_tables(db, schema, **kwargs):
         return {
             "recent_customers": [
                 {
@@ -44,7 +44,7 @@ class CustomerService:
                     "status": r[5],
                     "created_at": str(r[6])
                 }
-                for r in CustomerRepository.recent_customers(db, schema)
+                for r in CustomerRepository.recent_customers(db, schema, **kwargs)
             ],
             "active_contracts": [
                 {
@@ -56,13 +56,13 @@ class CustomerService:
                     "value": r[5],
                     "status": r[6]
                 }
-                for r in CustomerRepository.active_contracts(db, schema)
+                for r in CustomerRepository.active_contracts(db, schema, **kwargs)
             ]
         }
 
     # Alerts
     @staticmethod
-    def get_alerts(db, schema):
+    def get_alerts(db, schema, **kwargs):
         return {
             "inactive_customers": [
                 {
@@ -72,7 +72,7 @@ class CustomerService:
                     "branch_id": r[3],
                     "status": r[4]
                 }
-                for r in CustomerRepository.inactive_customers(db, schema)
+                for r in CustomerRepository.inactive_customers(db, schema, **kwargs)
             ],
             "no_contract_customers": [
                 {
@@ -81,6 +81,6 @@ class CustomerService:
                     "type": r[2],
                     "created_at": str(r[3])
                 }
-                for r in CustomerRepository.no_contract_customers(db, schema)
+                for r in CustomerRepository.no_contract_customers(db, schema, **kwargs)
             ]
         }

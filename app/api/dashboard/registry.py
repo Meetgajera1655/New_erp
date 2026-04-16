@@ -14,7 +14,7 @@ from app.services.quotation_service import QuotationService
 from app.services.customer_service import CustomerService
 from app.services.contract_service import ContractService
 from app.services.support_service import SupportService
-from app.services.gma_service import GMAService
+# from app.services.gma_service import GMAService
 from app.services.task_service import TaskService
 from app.services.employee_service import EmployeeService
 from app.services.hrm_service import HRMService
@@ -229,20 +229,20 @@ class SupportAdapter(BaseDashboardAdapter):
     def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
         return SupportService.get_alerts(db, schema, **kwargs)
 
-class GMAAdapter(BaseDashboardAdapter):
-    @ttl_cache(ttl_seconds=60)
-    def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
-        return GMAService.get_kpi(db, schema, **kwargs)
-        
-    @ttl_cache(ttl_seconds=60)
-    def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
-        return GMAService.get_charts(db, schema, **kwargs)
-        
-    def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
-        return GMAService.get_tables(db, schema, **kwargs)
-
-    def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
-        return GMAService.get_alerts(db, schema, **kwargs)
+# class GMAAdapter(BaseDashboardAdapter):
+#     @ttl_cache(ttl_seconds=60)
+#     def get_kpis(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+#         return GMAService.get_kpi(db, schema, **kwargs)
+#         
+#     @ttl_cache(ttl_seconds=60)
+#     def get_charts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+#         return GMAService.get_charts(db, schema, **kwargs)
+#         
+#     def get_tables(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+#         return GMAService.get_tables(db, schema, **kwargs)
+# 
+#     def get_alerts(self, db, schema: str, allowed_modules: list = None, **kwargs) -> Dict[str, Any]:
+#         return GMAService.get_alerts(db, schema, **kwargs)
 
 class TaskAdapter(BaseDashboardAdapter):
     @ttl_cache(ttl_seconds=60)
@@ -276,7 +276,7 @@ REGISTRY: Dict[str, BaseDashboardAdapter] = {
     "customer_management": CustomerAdapter(),
     "contract_management": ContractAdapter(),
     "customer_support": SupportAdapter(),
-    "gma": GMAAdapter(),
+    # "gma": GMAAdapter(),
     "task_management": TaskAdapter(),
     "employee_management": StandardAdapter(EmployeeService),
     "hrm": StandardAdapter(HRMService),

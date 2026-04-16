@@ -133,10 +133,10 @@ class FinancialService:
         where_t, params_t = apply_financial_filters("t", "created_at", branch, from_date, to_date, period)
         
         where_po, params_po = apply_financial_filters("po", "created_at", branch, from_date, to_date, period)
-        po_sub = f"(SELECT _po.*, _ub.branch_id FROM \"{schema}\".purchase_order _po LEFT JOIN \"{schema}\".user_branches _ub ON _po.created_by::BIGINT = _ub.user_id)"
+        po_sub = f"(SELECT _po.*, _ub.branch_id FROM \"{schema}\".purchase_order _po LEFT JOIN \"{schema}\".users _u ON _po.created_by = _u.email LEFT JOIN \"{schema}\".user_branches _ub ON _u.id = _ub.user_id)"
 
         where_sl, params_sl = apply_financial_filters("sl", "created_at", branch, from_date, to_date, period)
-        sl_sub = f"(SELECT _sl.*, _ub.branch_id FROM \"{schema}\".stock_ledger _sl LEFT JOIN \"{schema}\".user_branches _ub ON _sl.created_by::BIGINT = _ub.user_id)"
+        sl_sub = f"(SELECT _sl.*, _ub.branch_id FROM \"{schema}\".stock_ledger _sl LEFT JOIN \"{schema}\".users _u ON _sl.created_by = _u.email LEFT JOIN \"{schema}\".user_branches _ub ON _u.id = _ub.user_id)"
 
         results = {
             "revenue_summary": [

@@ -1,4 +1,6 @@
 from app.repositories.inventory_repo import InventoryRepository
+from sqlalchemy import text
+from app.filters.inventory_filter import apply_dashboard_filters
 
 class InventoryService:
     """
@@ -7,7 +9,7 @@ class InventoryService:
     """
 
     @staticmethod
-    def get_inventory_kpi(db, schema, allowed_modules: list = None):
+    def get_inventory_kpi(db, schema, allowed_modules: list = None, **kwargs):
         # Default to full access if none specified
         am = [m.upper() for m in allowed_modules] if allowed_modules else ["PRODUCT_MANAGEMENT", "STOCK_MANAGEMENT"]
         
@@ -16,28 +18,28 @@ class InventoryService:
         # 1. Product Management Scope
         if "PRODUCT_MANAGEMENT" in am:
             data.update({
-                "total_products": InventoryRepository.total_products(db, schema),
-                "active_products": InventoryRepository.active_products(db, schema),
+                "total_products": InventoryRepository.total_products(db, schema, **kwargs),
+                "active_products": InventoryRepository.active_products(db, schema, **kwargs),
             })
             
         # 2. Stock Management Scope
         if "STOCK_MANAGEMENT" in am:
             data.update({
-                "total_stock": InventoryRepository.total_stock(db, schema),
-                "total_inventory_value": InventoryRepository.total_inventory_value(db, schema),
-                "total_assets": InventoryRepository.total_assets(db, schema),
-                "total_consumables": InventoryRepository.total_consumables(db, schema),
-                "total_resell_stock": InventoryRepository.total_resell(db, schema),
-                "in_transit_stock": InventoryRepository.in_transit_stock(db, schema),
-                "reserved_stock": InventoryRepository.reserved_stock(db, schema),
-                "low_stock_products": InventoryRepository.low_stock_products(db, schema),
-                "out_of_stock_products": InventoryRepository.out_of_stock(db, schema)
+                "total_stock": InventoryRepository.total_stock(db, schema, **kwargs),
+                "total_inventory_value": InventoryRepository.total_inventory_value(db, schema, **kwargs),
+                "total_assets": InventoryRepository.total_assets(db, schema, **kwargs),
+                "total_consumables": InventoryRepository.total_consumables(db, schema, **kwargs),
+                "total_resell_stock": InventoryRepository.total_resell(db, schema, **kwargs),
+                "in_transit_stock": InventoryRepository.in_transit_stock(db, schema, **kwargs),
+                "reserved_stock": InventoryRepository.reserved_stock(db, schema, **kwargs),
+                "low_stock_products": InventoryRepository.low_stock_products(db, schema, **kwargs),
+                "out_of_stock_products": InventoryRepository.out_of_stock(db, schema, **kwargs)
             })
             
         return data
     
     @staticmethod
-    def get_inventory_charts(db, schema, allowed_modules: list = None):
+    def get_inventory_charts(db, schema, allowed_modules: list = None, **kwargs):
         am = [m.upper() for m in allowed_modules] if allowed_modules else ["PRODUCT_MANAGEMENT", "STOCK_MANAGEMENT"]
         
         data = {}
@@ -47,31 +49,31 @@ class InventoryService:
             data.update({
                 "stock_by_category": [
                     {"category": r[0], "total_stock": r[1]}
-                    for r in InventoryRepository.stock_by_category(db, schema)
+                    for r in InventoryRepository.stock_by_category(db, schema, **kwargs)
                 ],
                 "stock_by_type": {
-                    "assets": InventoryRepository.stock_by_type(db, schema)[0],
-                    "consumables": InventoryRepository.stock_by_type(db, schema)[1],
-                    "resell": InventoryRepository.stock_by_type(db, schema)[2],
+                    "assets": InventoryRepository.stock_by_type(db, schema, **kwargs)[0],
+                    "consumables": InventoryRepository.stock_by_type(db, schema, **kwargs)[1],
+                    "resell": InventoryRepository.stock_by_type(db, schema, **kwargs)[2],
                 },
                 "branch_stock": [
                     {"branch_id": r[0], "total_stock": r[1]}
-                    for r in InventoryRepository.branch_stock(db, schema)
+                    for r in InventoryRepository.branch_stock(db, schema, **kwargs)
                 ],
                 "stock_movement_trend": [
                     {"date": str(r[0]), "movement": r[1]}
-                    for r in InventoryRepository.stock_movement_trend(db, schema)
+                    for r in InventoryRepository.stock_movement_trend(db, schema, **kwargs)
                 ],
                 "inventory_value_by_category": [
                     {"category": r[0], "value": r[1]}
-                    for r in InventoryRepository.inventory_value_by_category(db, schema)
+                    for r in InventoryRepository.inventory_value_by_category(db, schema, **kwargs)
                 ]
             })
             
         return data
     
     @staticmethod
-    def get_inventory_tables(db, schema, allowed_modules: list = None):
+    def get_inventory_tables(db, schema, allowed_modules: list = None, **kwargs):
         am = [m.upper() for m in allowed_modules] if allowed_modules else ["PRODUCT_MANAGEMENT", "STOCK_MANAGEMENT"]
         
         data = {}
@@ -90,7 +92,7 @@ class InventoryService:
                         "resell_qty": r[6],
                         "status": r[7]
                     }
-                    for r in InventoryRepository.low_stock_table(db, schema)
+                    for r in InventoryRepository.low_stock_table(db, schema, **kwargs)
                 ],
                 "out_of_stock_products": [
                     {
@@ -99,7 +101,7 @@ class InventoryService:
                         "branch_id": r[2],
                         "category": r[3]
                     }
-                    for r in InventoryRepository.out_of_stock_table(db, schema)
+                    for r in InventoryRepository.out_of_stock_table(db, schema, **kwargs)
                 ],
                 "branch_stock": [
                     {
@@ -113,7 +115,7 @@ class InventoryService:
                         "reserved_qty": r[7],
                         "status": r[8]
                     }
-                    for r in InventoryRepository.branch_stock_table(db, schema)
+                    for r in InventoryRepository.branch_stock_table(db, schema, **kwargs)
                 ],
                 "central_stock_entries": [
                     {
@@ -129,7 +131,7 @@ class InventoryService:
                         "total_with_tax": r[9],
                         "created_at": str(r[10])
                     }
-                    for r in InventoryRepository.central_stock_entries(db, schema)
+                    for r in InventoryRepository.central_stock_entries(db, schema, **kwargs)
                 ],
                 "recent_stock_movements": [
                     {
@@ -143,7 +145,7 @@ class InventoryService:
                         "created_by": r[7],
                         "created_at": str(r[8])
                     }
-                    for r in InventoryRepository.stock_movements(db, schema)
+                    for r in InventoryRepository.stock_movements(db, schema, **kwargs)
                 ],
                 "stock_transfers": [
                     {
@@ -153,14 +155,14 @@ class InventoryService:
                         "resell_qty": r[3],
                         "source_branch_id": r[4]
                     }
-                    for r in InventoryRepository.stock_transfers_table(db, schema)
+                    for r in InventoryRepository.stock_transfers_table(db, schema, **kwargs)
                 ]
             })
             
         return data
     
     @staticmethod
-    def get_inventory_alerts(db, schema, allowed_modules: list = None):
+    def get_inventory_alerts(db, schema, allowed_modules: list = None, **kwargs):
         am = [m.upper() for m in allowed_modules] if allowed_modules else ["PRODUCT_MANAGEMENT", "STOCK_MANAGEMENT"]
         
         data = {}
@@ -169,24 +171,24 @@ class InventoryService:
             data.update({
                 "low_stock_alerts": [
                     {"product_name": r[0], "branch_id": r[1]}
-                    for r in InventoryRepository.low_stock_alert(db, schema)
+                    for r in InventoryRepository.low_stock_alert(db, schema, **kwargs)
                 ],
                 "out_of_stock_alerts": [
                     {"product_name": r[0]}
-                    for r in InventoryRepository.out_of_stock_alert(db, schema)
+                    for r in InventoryRepository.out_of_stock_alert(db, schema, **kwargs)
                 ],
                 "high_reserved_stock": [
                     {"product_name": r[0], "reserved_qty": r[1]}
-                    for r in InventoryRepository.high_reserved_stock(db, schema)
+                    for r in InventoryRepository.high_reserved_stock(db, schema, **kwargs)
                 ],
                 "high_in_transit_stock": [
                     {"product_name": r[0], "in_transit_qty": r[1]}
-                    for r in InventoryRepository.high_in_transit(db, schema)
+                    for r in InventoryRepository.high_in_transit(db, schema, **kwargs)
                 ],
                 "expired_consumables": [
                     {"product_name": r[0], "expiry_date": str(r[1])}
-                    for r in InventoryRepository.expired_consumables(db, schema)
+                    for r in InventoryRepository.expired_consumables(db, schema, **kwargs)
                 ]
             })
             
-        return data
+        return data

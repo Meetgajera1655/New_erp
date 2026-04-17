@@ -3,33 +3,33 @@ from app.repositories.task_repository import TaskRepository
 class TaskService:
 
     @staticmethod
-    def get_kpi(db, schema):
+    def get_kpi(db, schema, **kwargs):
         return {
-            "total_tasks": TaskRepository.total_tasks(db, schema),
-            "completed_tasks": TaskRepository.completed_tasks(db, schema),
-            "pending_tasks": TaskRepository.pending_tasks(db, schema),
-            "overdue_tasks": TaskRepository.overdue_tasks(db, schema),
+            "total_tasks": TaskRepository.total_tasks(db, schema, **kwargs),
+            "completed_tasks": TaskRepository.completed_tasks(db, schema, **kwargs),
+            "pending_tasks": TaskRepository.pending_tasks(db, schema, **kwargs),
+            "overdue_tasks": TaskRepository.overdue_tasks(db, schema, **kwargs),
         }
 
     @staticmethod
-    def get_charts(db, schema):
+    def get_charts(db, schema, **kwargs):
         return {
             "status_chart": [
                 {"status": r[0], "count": r[1]}
-                for r in TaskRepository.status_chart(db, schema)
+                for r in TaskRepository.status_chart(db, schema, **kwargs)
             ],
             "monthly_trend": [
                 {"month": str(r[0]), "count": r[1]}
-                for r in TaskRepository.monthly_trend(db, schema)
+                for r in TaskRepository.monthly_trend(db, schema, **kwargs)
             ],
             "technician_workload": [
                 {"technician": r[0], "count": r[1]}
-                for r in TaskRepository.technician_workload(db, schema)
+                for r in TaskRepository.technician_workload(db, schema, **kwargs)
             ],
         }
 
     @staticmethod
-    def get_tables(db, schema):
+    def get_tables(db, schema, **kwargs):
         return {
             "recent_tasks": [
                 {
@@ -42,7 +42,7 @@ class TaskService:
                     "end_time": str(r[6]),
                     "status": r[7],
                 }
-                for r in TaskRepository.recent_tasks(db, schema)
+                for r in TaskRepository.recent_tasks(db, schema, **kwargs)
             ],
             "material_usage": [
                 {
@@ -53,12 +53,12 @@ class TaskService:
                     "used_qty": r[4],
                     "scheduled_date": str(r[5]),
                 }
-                for r in TaskRepository.material_usage(db, schema)
+                for r in TaskRepository.material_usage(db, schema, **kwargs)
             ],
         }
 
     @staticmethod
-    def get_alerts(db, schema):
+    def get_alerts(db, schema, **kwargs):
         return {
             "overdue_tasks": [
                 {
@@ -68,7 +68,7 @@ class TaskService:
                     "scheduled_date": str(r[3]),
                     "status": r[4],
                 }
-                for r in TaskRepository.overdue_alert(db, schema)
+                for r in TaskRepository.overdue_alert(db, schema, **kwargs)
             ],
             "technician_overload": [
                 {
@@ -76,6 +76,6 @@ class TaskService:
                     "date": str(r[1]),
                     "task_count": r[2],
                 }
-                for r in TaskRepository.technician_overload(db, schema)
+                for r in TaskRepository.technician_overload(db, schema, **kwargs)
             ],
         }

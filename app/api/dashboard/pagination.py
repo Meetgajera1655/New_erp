@@ -25,3 +25,4 @@ def paginate_list(data: List[Dict[str, Any]], page: int = 1, limit: int = 10) ->
     sliced_data = data[start_idx:end_idx]
 
     return sliced_data, total, total_pages
+

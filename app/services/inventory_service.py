@@ -56,7 +56,7 @@ class InventoryService:
                     "consumables": InventoryRepository.stock_by_type(db, schema, **kwargs)[1],
                     "resell": InventoryRepository.stock_by_type(db, schema, **kwargs)[2],
                 },
-                "branch_stock": [
+                "branch_stock_chart": [
                     {"branch_id": r[0], "total_stock": r[1]}
                     for r in InventoryRepository.branch_stock(db, schema, **kwargs)
                 ],
@@ -67,6 +67,15 @@ class InventoryService:
                 "inventory_value_by_category": [
                     {"category": r[0], "value": r[1]}
                     for r in InventoryRepository.inventory_value_by_category(db, schema, **kwargs)
+                ],
+                "monthly_stock_comparison": [
+                    {
+                        "month": r[0],
+                        "assets": r[1],
+                        "consumables": r[2],
+                        "resell": r[3]
+                    }
+                    for r in InventoryRepository.monthly_stock_comparison(db, schema, **kwargs)
                 ]
             })
             
@@ -86,11 +95,12 @@ class InventoryService:
                         "product_name": r[0],
                         "product_code": r[1],
                         "branch_id": r[2],
-                        "category": r[3],
-                        "assets_qty": r[4],
-                        "consumable_qty": r[5],
-                        "resell_qty": r[6],
-                        "status": r[7]
+                        "branch_name": r[3],
+                        "category": r[4],
+                        "assets_qty": r[5],
+                        "consumable_qty": r[6],
+                        "resell_qty": r[7],
+                        "status": r[8]
                     }
                     for r in InventoryRepository.low_stock_table(db, schema, **kwargs)
                 ],
@@ -99,21 +109,23 @@ class InventoryService:
                         "product_name": r[0],
                         "product_code": r[1],
                         "branch_id": r[2],
-                        "category": r[3]
+                        "branch_name": r[3],
+                        "category": r[4]
                     }
                     for r in InventoryRepository.out_of_stock_table(db, schema, **kwargs)
                 ],
                 "branch_stock": [
                     {
                         "branch_id": r[0],
-                        "product_name": r[1],
-                        "category": r[2],
-                        "assets_qty": r[3],
-                        "consumable_qty": r[4],
-                        "resell_qty": r[5],
-                        "in_transit_qty": r[6],
-                        "reserved_qty": r[7],
-                        "status": r[8]
+                        "branch_name": r[1],
+                        "product_name": r[2],
+                        "category": r[3],
+                        "assets_qty": r[4],
+                        "consumable_qty": r[5],
+                        "resell_qty": r[6],
+                        "in_transit_qty": r[7],
+                        "reserved_qty": r[8],
+                        "status": r[9]
                     }
                     for r in InventoryRepository.branch_stock_table(db, schema, **kwargs)
                 ],
@@ -138,12 +150,14 @@ class InventoryService:
                         "reference_type": r[0],
                         "reference_id": r[1],
                         "product_id": r[2],
-                        "branch_id": r[3],
-                        "stock_type": r[4],
-                        "quantity_delta": r[5],
-                        "action": r[6],
-                        "created_by": r[7],
-                        "created_at": str(r[8])
+                        "product_name": r[3] if r[3] else "Unknown Product",
+                        "branch_id": r[4],
+                        "branch_name": r[5] if r[5] else "Unknown Branch",
+                        "stock_type": r[6],
+                        "quantity_delta": r[7],
+                        "action": r[8],
+                        "created_by": r[9],
+                        "created_at": str(r[10])
                     }
                     for r in InventoryRepository.stock_movements(db, schema, **kwargs)
                 ],
@@ -153,7 +167,8 @@ class InventoryService:
                         "assets_qty": r[1],
                         "consumable_qty": r[2],
                         "resell_qty": r[3],
-                        "source_branch_id": r[4]
+                        "source_branch_id": r[4],
+                        "branch_name": r[5]
                     }
                     for r in InventoryRepository.stock_transfers_table(db, schema, **kwargs)
                 ]
@@ -191,4 +206,4 @@ class InventoryService:
                 ]
             })
             
-        return data
+        return data

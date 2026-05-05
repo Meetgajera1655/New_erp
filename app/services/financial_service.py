@@ -25,6 +25,10 @@ class FinancialService:
         u_sub = f"(SELECT _u.*, _ub.branch_id FROM \"{schema}\".users _u LEFT JOIN \"{schema}\".user_branches _ub ON _u.id = _ub.user_id)"
         where_u, params_u = apply_financial_filters("u", "date_of_joining", branch, from_date, to_date, period)
 
+        # 3. Stock Ledger Filter via subquery
+        sl_sub = f"(SELECT _sl.*, _ub.branch_id FROM \"{schema}\".stock_ledger _sl LEFT JOIN \"{schema}\".users _u ON _sl.created_by = _u.email LEFT JOIN \"{schema}\".user_branches _ub ON _u.id = _ub.user_id)"
+        where_sl, params_sl = apply_financial_filters("sl", "created_at", branch, from_date, to_date, period)
+
         # OPTIMIZATION: Combine multiple executions and add timing
         results = {
             "country_revenue": [
@@ -39,12 +43,13 @@ class FinancialService:
             ],
 
             "branch_revenue": [
-                {"branch_id": r[0], "date": str(r[1]), "revenue": float(r[2] or 0)}
+                {"branch_name": r[0] if r[0] else "Unknown Branch", "date": str(r[1]), "revenue": float(r[2] or 0)}
                 for r in db.execute(text(f"""
-                    SELECT si.branch_id, si.invoice_date, SUM(si.grand_total)
+                    SELECT b.branch_name, si.invoice_date, SUM(si.grand_total)
                     FROM "{schema}".sales_invoices si
+                    LEFT JOIN "{schema}".branches b ON si.branch_id = b.id
                     WHERE {where_si}
-                    GROUP BY si.branch_id, si.invoice_date
+                    GROUP BY b.branch_name, si.invoice_date
                     ORDER BY si.invoice_date
                 """), params_si).fetchall()
             ],
@@ -101,6 +106,16 @@ class FinancialService:
                     WHERE {where_si}
                     GROUP BY si.status
                 """), params_si).fetchall()
+            ],
+
+            "chemical_consumption": [
+                {"product_name": r[0], "total_consumption": float(r[1] or 0)}
+                for r in db.execute(text(f"""
+                    SELECT sl.product_name, SUM(sl.consumable_qty)
+                    FROM {sl_sub} sl
+                    WHERE {where_sl}
+                    GROUP BY sl.product_name
+                """), params_sl).fetchall()
             ],
         }
 

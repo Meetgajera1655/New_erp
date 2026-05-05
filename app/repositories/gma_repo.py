@@ -132,6 +132,33 @@ class GMARepository:
         print("QUERY:", query_sql)
         return db.execute(text(query_sql), params).fetchall()
 
+    @staticmethod
+    def monthly_gma_value(db, schema, **kwargs):
+        where_clause, params = apply_gma_filters(alias="g", **kwargs)
+        query_sql = f"""
+            SELECT 
+                TO_CHAR(g.created_at, 'YYYY-MM') AS month,
+                COALESCE(SUM(g.total_annual_cost),0) AS total_cost,
+                COALESCE(SUM(g.total_annual_price),0) AS total_price,
+                COALESCE(AVG(g.overall_gross_margin),0) AS avg_margin
+            FROM "{schema}".gma_sheets g
+            WHERE 
+                g.is_deleted = FALSE
+        """
+        if where_clause:
+            query_sql += f" AND {where_clause}"
+        query_sql += """
+            GROUP BY 
+                TO_CHAR(g.created_at, 'YYYY-MM')
+            ORDER BY 
+                month
+        """
+
+        print("WHERE:", where_clause)
+        print("PARAMS:", params)
+        print("QUERY:", query_sql)
+        return db.execute(text(query_sql), params).fetchall()
+
     # ================= TABLES =================
 
     @staticmethod

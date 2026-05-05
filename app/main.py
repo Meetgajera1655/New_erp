@@ -22,6 +22,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
+    "https://erp-v2-integration.netlify.app"
 ]
 
 app.add_middleware(
@@ -31,6 +32,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(dashboard_router)
 
 # =========================
 # Global Error Handlers

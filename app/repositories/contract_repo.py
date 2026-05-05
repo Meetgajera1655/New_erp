@@ -38,12 +38,12 @@ class ContractRepository:
         return db.execute(text(query_sql), params).scalar()
 
     @staticmethod
-    def total_value(db, schema, **kwargs):
+    def total_active_contract_value(db, schema, **kwargs):
         where_clause, params = apply_contract_filters(alias="c", **kwargs)
         query_sql = f"""
             SELECT COALESCE(SUM(c.total_sale_value),0)
             FROM "{schema}".contracts c
-            WHERE 1=1
+            WHERE c.status = 'ACTIVE'
         """
         if where_clause:
             query_sql += f" AND {where_clause}"
@@ -126,6 +126,31 @@ class ContractRepository:
         query_sql += """
             GROUP BY DATE_TRUNC('month', c.start_date)
             ORDER BY DATE_TRUNC('month', c.start_date)
+        """
+
+        print("WHERE:", where_clause)
+        print("PARAMS:", params)
+        print("QUERY:", query_sql)
+        return db.execute(text(query_sql), params).fetchall()
+
+    @staticmethod
+    def monthly_contract_revenue(db, schema, **kwargs):
+        where_clause, params = apply_contract_filters(alias="c", **kwargs)
+        query_sql = f"""
+            SELECT 
+                TO_CHAR(c.created_at, 'YYYY-MM') AS month,
+                COALESCE(SUM(c.total_sale_value),0) AS total_revenue
+            FROM "{schema}".contracts c
+            WHERE 
+                c.status = 'ACTIVE'
+        """
+        if where_clause:
+            query_sql += f" AND {where_clause}"
+        query_sql += """
+            GROUP BY 
+                TO_CHAR(c.created_at, 'YYYY-MM')
+            ORDER BY 
+                month
         """
 
         print("WHERE:", where_clause)

@@ -9,7 +9,7 @@ class LeadRepository:
         query_sql = f"""
             SELECT COUNT(l.id)
             FROM "{schema}".leads l
-            WHERE l.status NOT IN ('Lost','Converted')
+            WHERE l.status NOT IN ('LOST','CONVERTED')
             AND {where_clause}
         """
         return db.execute(text(query_sql), params or {}).scalar()
@@ -19,7 +19,7 @@ class LeadRepository:
         query_sql = f"""
             SELECT COUNT(l.id)
             FROM "{schema}".leads l
-            WHERE l.status = 'Qualified'
+            WHERE l.status = 'QUALIFIED'
             AND {where_clause}
         """
         return db.execute(text(query_sql), params or {}).scalar()
@@ -39,8 +39,8 @@ class LeadRepository:
     def conversion_rate(db, schema, where_clause="1=1", params=None):
         query_sql = f"""
             SELECT 
-                COUNT(*) FILTER (WHERE l.status = 'Converted')::float /
-                NULLIF(COUNT(*) FILTER (WHERE l.status IN ('Converted','Lost')), 0)
+                COUNT(*) FILTER (WHERE l.status = 'CONVERTED')::float /
+                NULLIF(COUNT(*) FILTER (WHERE l.status IN ('CONVERTED','LOST')), 0)
             FROM "{schema}".leads l
             WHERE 1=1 AND {where_clause}
         """
@@ -110,10 +110,13 @@ class LeadRepository:
     @staticmethod
     def upcoming_followups(db, schema, where_clause="1=1", params=None):
         query_sql = f"""
-            SELECT l.lead_name, l.next_follow_up_date, l.priority
+            SELECT l.lead_name, l.next_follow_up_date, l.priority, 
+                   COALESCE((SELECT contact_mode FROM "{schema}".follow_ups WHERE lead_id = l.id ORDER BY created_at DESC LIMIT 1), 'Phone') as contact_mode
             FROM "{schema}".leads l
             WHERE l.next_follow_up_date >= CURRENT_DATE
+            AND UPPER(l.status) NOT IN ('CONVERTED', 'LOST')
             AND {where_clause}
+            ORDER BY l.next_follow_up_date ASC
         """
         return db.execute(text(query_sql), params or {}).fetchall()
 
@@ -125,8 +128,10 @@ class LeadRepository:
             SELECT l.id, l.lead_name, l.next_follow_up_date, l.status
             FROM "{schema}".leads l
             WHERE l.next_follow_up_date < CURRENT_DATE
-            AND l.status NOT IN ('Converted','Lost')
+            AND UPPER(l.status) NOT IN ('CONVERTED', 'LOST')
             AND {where_clause}
+            ORDER BY l.next_follow_up_date ASC
+            LIMIT 20
         """
         return db.execute(text(query_sql), params or {}).fetchall()
 
@@ -136,9 +141,11 @@ class LeadRepository:
             SELECT l.id, l.lead_name, l.mobile_number,
                 l.priority, l.status, l.created_at
             FROM "{schema}".leads l
-            WHERE l.priority = 'Urgent'
-            AND l.status = 'New'
+            WHERE UPPER(l.priority) = 'URGENT'
+            AND UPPER(l.status) = 'NEW'
             AND {where_clause}
+            ORDER BY l.created_at DESC
+            LIMIT 20
         """
         return db.execute(text(query_sql), params or {}).fetchall()
 
@@ -149,16 +156,18 @@ class LeadRepository:
             FROM "{schema}".leads l
             WHERE (
                 (
-                    l.priority = 'Urgent'
-                    AND l.status = 'Negotiation'
+                    UPPER(l.priority) = 'URGENT'
+                    AND UPPER(l.status) = 'NEGOTIATION'
                     AND CURRENT_DATE - l.updated_at::date > 2
                 )
                 OR (
-                    l.priority = 'Normal'
-                    AND l.status = 'Negotiation'
+                    UPPER(l.priority) = 'NORMAL'
+                    AND UPPER(l.status) = 'NEGOTIATION'
                     AND CURRENT_DATE - l.updated_at::date > 7
                 )
             )
             AND {where_clause}
+            ORDER BY l.updated_at ASC
+            LIMIT 20
         """
         return db.execute(text(query_sql), params or {}).fetchall()

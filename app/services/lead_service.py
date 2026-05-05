@@ -68,9 +68,10 @@ class LeadService:
                 {
                     "lead_name": r[0],
                     "followup_date": str(r[1]),
-                    "priority": r[2]
+                    "priority": r[2],
+                    "contact_mode": r[3]
                 }
-                for r in LeadRepository.upcoming_followups(db, schema, where_clause_l, params_l) # Uses 'leads' table alias 'l'
+                for r in LeadRepository.upcoming_followups(db, schema, where_clause_l, params_l)
             ]
             
         return out

@@ -7,10 +7,7 @@ class BranchManagementService:
         return {
             "active_branches": BranchRepository.count_active_branches(db, schema, **kwargs),
 
-            "branch_type_distribution": [
-                {"branch_type": r[0], "count": r[1]}
-                for r in BranchRepository.branch_type_distribution(db, schema, **kwargs)
-            ],
+            "total_branches": BranchRepository.total_branches(db, schema, **kwargs),
 
             "branch_density": [
                 {"state": r[0], "count": r[1]}
@@ -37,6 +34,10 @@ class BranchManagementService:
         "status_breakdown": [
             {"status": r[0], "count": r[1]}
             for r in BranchRepository.status_breakdown(db, schema, **kwargs)
+        ],
+        "branch_type_distribution": [
+            {"branch_type": r[0], "count": r[1]}
+            for r in BranchRepository.branch_type_distribution(db, schema, **kwargs)
         ]
     }
 
@@ -86,3 +87,14 @@ class BranchManagementService:
             for r in BranchRepository.invalid_branch_codes(db, schema, **kwargs)
         ]
     }
+
+    @staticmethod
+    def get_all_branches(db, schema):
+        branches = BranchRepository.get_all_branches(db, schema)
+        return [
+            {
+                "branch_id": r[0],
+                "name": r[1]
+            }
+            for r in branches
+        ]

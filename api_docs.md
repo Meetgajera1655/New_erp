@@ -188,6 +188,7 @@ Use these values in the `?table=` parameter.
 | Table ID | Description |
 |---|---|
 | `recent_orders` | Recent sales orders |
+| `sales_order_items` | Sales order items |
 
 ### `task_management`
 

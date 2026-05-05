@@ -173,9 +173,8 @@ class QuotationRepository:
     def expiring_quotes(db, schema, **kwargs):
         where_clause, params = apply_quotation_filters(alias="q", **kwargs)
         query_sql = f"""
-            SELECT q.quotation_number, q.valid_till, q.grand_total, u.first_name
+            SELECT q.quotation_number, q.valid_till, q.grand_total, q.created_by
             FROM "{schema}".quotations q
-            JOIN "{schema}".users u ON q.created_by::bigint = u.id
             WHERE q.valid_till BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '3 days'
             AND q.status = 'SENT'
             AND q.is_deleted = FALSE

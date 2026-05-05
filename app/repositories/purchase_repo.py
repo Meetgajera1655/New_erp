@@ -21,7 +21,7 @@ class PurchaseRepository:
         query_sql = f"""
             SELECT COUNT(po.id)
             FROM "{schema}".purchase_order po
-            WHERE po.status IN ('Pending Approval','Approved','Ordered','Partially Received')
+            WHERE po.status IN ('PENDING_APPROVAL','APPROVED','ORDERED','PARTIALLY_RECEIVED')
             AND po.is_deleted = FALSE
             AND {where_clause}
         """
@@ -96,6 +96,25 @@ class PurchaseRepository:
             ORDER BY po.po_date
         """
         print(f"WHERE: {where_clause}\nPARAMS: {params}\nQUERY: {query_sql}")
+        return db.execute(text(query_sql), params).fetchall()
+
+    @staticmethod
+    def monthly_purchase_value(db, schema, **kwargs):
+        where_clause, params = apply_purchase_filters(schema=schema, alias="po", **kwargs)
+        query_sql = f"""
+            SELECT 
+                TO_CHAR(po.po_date, 'YYYY-MM') AS month,
+                COALESCE(SUM(po.grand_total), 0) AS total_purchase_value
+            FROM "{schema}".purchase_order po
+            WHERE 
+                po.is_deleted = FALSE
+                AND {where_clause}
+            GROUP BY 
+                TO_CHAR(po.po_date, 'YYYY-MM')
+            ORDER BY 
+                month
+        """
+        print(f"WHERE: {where_clause}\\nPARAMS: {params}\\nQUERY: {query_sql}")
         return db.execute(text(query_sql), params).fetchall()
     
     @staticmethod

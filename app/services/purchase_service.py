@@ -19,7 +19,15 @@ class PurchaseService:
 
             "vendor_spending": [{"vendor": r[0], "amount": r[1]} for r in PurchaseRepository.vendor_spending(db, schema, **kwargs)],
 
-            "daily_po": [{"date": str(r[0]), "count": r[1]} for r in PurchaseRepository.daily_po(db, schema, **kwargs)]
+            "daily_po": [{"date": str(r[0]), "count": r[1]} for r in PurchaseRepository.daily_po(db, schema, **kwargs)],
+
+            "monthly_purchase_value": [
+                {
+                    "month": r[0],
+                    "total": r[1]
+                }
+                for r in PurchaseRepository.monthly_purchase_value(db, schema, **kwargs)
+            ]
         }
     
 

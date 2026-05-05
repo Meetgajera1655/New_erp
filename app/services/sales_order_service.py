@@ -42,6 +42,19 @@ class SalesOrderService:
                     "created_at": str(r[6])
                 }
                 for r in SalesOrderRepository.recent_orders(db, schema, **kwargs)
+            ],
+            "sales_order_items": [
+                {
+                    "so_number": r[0],
+                    "customer_name": r[1],
+                    "product_name": r[2],
+                    "quantity": float(r[3]),
+                    "uom": r[4],
+                    "unit_price": float(r[5]),
+                    "tax_amount": float(r[6]),
+                    "line_total": float(r[7])
+                }
+                for r in SalesOrderRepository.sales_order_items(db, schema, **kwargs)
             ]
         }
 

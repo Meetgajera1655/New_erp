@@ -7,7 +7,7 @@ class ContractService:
         return {
             "total_contracts": ContractRepository.total_contracts(db, schema, **kwargs),
             "active_contracts": ContractRepository.active_contracts(db, schema, **kwargs),
-            "total_value": ContractRepository.total_value(db, schema, **kwargs),
+            "total_active_contract_value": ContractRepository.total_active_contract_value(db, schema, **kwargs),
             "expiring_soon": ContractRepository.expiring_soon(db, schema, **kwargs)
         }
 
@@ -25,6 +25,13 @@ class ContractService:
             "monthly_value": [
                 {"month": str(r[0]), "value": r[1]}
                 for r in ContractRepository.monthly_value(db, schema, **kwargs)
+            ],
+            "monthly_contract_revenue": [
+                {
+                    "month": r[0],
+                    "total_revenue": float(r[1]) if r[1] else 0
+                }
+                for r in ContractRepository.monthly_contract_revenue(db, schema, **kwargs)
             ]
         }
 

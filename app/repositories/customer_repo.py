@@ -43,7 +43,7 @@ class CustomerRepository:
         query_sql = f"""
             SELECT COUNT(c.id)
             FROM "{schema}".customers c
-            WHERE c.customer_type = 'Contract'
+            WHERE c.customer_type = 'CONTRACT'
             AND c.status IN ('ACTIVE', 'INACTIVE')
         """
         if where_clause:

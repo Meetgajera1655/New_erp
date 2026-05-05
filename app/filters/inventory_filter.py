@@ -18,7 +18,7 @@ INVENTORY_FILTER_CONFIG = {
     },
     "cse": {
         "table": "central_stock_entries",
-        "branch": "branch_id",
+        "branch": "assignee_branch_id",
         "date": "created_at"
     }
 }

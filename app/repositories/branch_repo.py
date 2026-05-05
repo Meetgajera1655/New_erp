@@ -4,6 +4,19 @@ from app.filters.branch_management_filter import apply_branch_management_filters
 class BranchRepository:
 
     @staticmethod
+    def total_branches(db, schema, **kwargs):
+        where_clause, params = apply_branch_management_filters(schema=schema, alias="b", **kwargs)
+        query_sql = f"""
+            SELECT COUNT(b.id)
+            FROM "{schema}".branches b
+            WHERE 1=1
+        """
+        if where_clause and where_clause != "1=1":
+            query_sql += f" AND {where_clause}"
+        print(f"WHERE: {where_clause}\\nPARAMS: {params}\\nFINAL QUERY: {query_sql}")
+        return db.execute(text(query_sql), params).scalar()
+
+    @staticmethod
     def count_active_branches(db, schema, **kwargs):
         where_clause, params = apply_branch_management_filters(schema=schema, alias="b", **kwargs)
         query_sql = f"""
@@ -144,3 +157,12 @@ class BranchRepository:
             query_sql += f" AND {where_clause}"
         print(f"WHERE: {where_clause}\\nPARAMS: {params}\\nFINAL QUERY: {query_sql}")
         return db.execute(text(query_sql), params).fetchall()
+
+    @staticmethod
+    def get_all_branches(db, schema):
+        query_sql = f"""
+            SELECT b.id, b.branch_name
+            FROM "{schema}".branches b
+            ORDER BY b.branch_name
+        """
+        return db.execute(text(query_sql)).fetchall()

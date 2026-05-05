@@ -21,7 +21,7 @@ class SalesOrderRepository:
         query_sql = f"""
             SELECT COALESCE(SUM(so.grand_total), 0)
             FROM {schema}.sales_orders so
-            WHERE 1=1 AND {where_clause}
+            WHERE so.status IN ('DRAFT', 'OPEN', 'FULFILLED', 'BILLED') AND {where_clause}
         """
         print(f"WHERE: {where_clause}\nPARAMS: {params}\nQUERY: {query_sql}")
         return db.execute(text(query_sql), params).scalar()
@@ -69,7 +69,7 @@ class SalesOrderRepository:
         query_sql = f"""
             SELECT DATE_TRUNC('month', so.created_at), SUM(so.grand_total)
             FROM {schema}.sales_orders so
-            WHERE 1=1 AND {where_clause}
+            WHERE so.status IN ('DRAFT', 'OPEN', 'FULFILLED', 'BILLED') AND {where_clause}
             GROUP BY 1
             ORDER BY 1
         """
@@ -83,7 +83,7 @@ class SalesOrderRepository:
             SELECT b.branch_name, SUM(so.grand_total)
             FROM {schema}.sales_orders so
             JOIN {schema}.branches b ON so.branch_id = b.id
-            WHERE 1=1 AND {where_clause}
+            WHERE so.status IN ('DRAFT', 'OPEN', 'FULFILLED', 'BILLED') AND {where_clause}
             GROUP BY b.branch_name
         """
         print(f"WHERE: {where_clause}\nPARAMS: {params}\nQUERY: {query_sql}")
@@ -101,6 +101,28 @@ class SalesOrderRepository:
             WHERE 1=1 AND {where_clause}
             ORDER BY so.created_at DESC
             LIMIT 20
+        """
+        print(f"WHERE: {where_clause}\nPARAMS: {params}\nQUERY: {query_sql}")
+        return db.execute(text(query_sql), params).fetchall()
+
+    @staticmethod
+    def sales_order_items(db, schema, **kwargs):
+        where_clause, params = apply_sales_order_filters(schema=schema, alias="s", **kwargs)
+        query_sql = f"""
+            SELECT 
+                s.so_number,
+                s.customer_name,
+                i.product_name,
+                i.quantity,
+                i.uom,
+                i.unit_price,
+                i.tax_amount,
+                i.line_total
+            FROM {schema}.sales_order_product_lines i
+            JOIN {schema}.sales_orders s ON i.sales_order_id = s.id
+            WHERE 1=1 AND {where_clause}
+            ORDER BY s.created_at DESC, i.display_order ASC
+            LIMIT 50
         """
         print(f"WHERE: {where_clause}\nPARAMS: {params}\nQUERY: {query_sql}")
         return db.execute(text(query_sql), params).fetchall()

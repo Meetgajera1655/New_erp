@@ -233,16 +233,41 @@ class InventoryRepository:
         query_sql += " GROUP BY sl.category"
         print(f"WHERE: {where_clause}\\nPARAMS: {params}\\nFINAL QUERY: {query_sql}")
         return db.execute(text(query_sql), params).fetchall()
+
+    # 6️⃣ Monthly Stock Comparison
+    @staticmethod
+    def monthly_stock_comparison(db, schema, **kwargs):
+        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sml"], **kwargs)
+        query_sql = f"""
+            SELECT 
+                TO_CHAR(sml.created_at, 'YYYY-MM') AS month,
+                SUM(CASE WHEN sml.stock_type = 'ASSET' THEN sml.quantity_delta ELSE 0 END) AS assets,
+                SUM(CASE WHEN sml.stock_type = 'CONSUMABLE' THEN sml.quantity_delta ELSE 0 END) AS consumables,
+                SUM(CASE WHEN sml.stock_type = 'RESELL' THEN sml.quantity_delta ELSE 0 END) AS resell
+            FROM "{schema}".stock_movement_logs sml
+            WHERE 1=1
+        """
+        if where_clause and where_clause != "1=1":
+            query_sql += f" AND {where_clause}"
+        query_sql += """
+            GROUP BY 
+                TO_CHAR(sml.created_at, 'YYYY-MM')
+            ORDER BY 
+                month
+        """
+        print(f"WHERE: {where_clause}\\nPARAMS: {params}\\nFINAL QUERY: {query_sql}")
+        return db.execute(text(query_sql), params).fetchall()
     
 
     # 1️⃣ Low Stock Products
     @staticmethod
     def low_stock_table(db, schema, **kwargs):
-        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sl"], **kwargs)
+        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sl", "b"], **kwargs)
         query_sql = f"""
-            SELECT sl.product_name, sl.product_code, sl.branch_id, sl.category,
+            SELECT sl.product_name, sl.product_code, sl.branch_id, b.branch_name, sl.category,
                    sl.assets_qty, sl.consumable_qty, sl.resell_qty, sl.status
             FROM "{schema}".stock_ledger sl
+            JOIN "{schema}".branches b ON sl.branch_id = b.id
             WHERE sl.status = 'LOW'
         """
         if where_clause and where_clause != "1=1":
@@ -253,10 +278,11 @@ class InventoryRepository:
     # 2️⃣ Out of Stock Products
     @staticmethod
     def out_of_stock_table(db, schema, **kwargs):
-        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sl"], **kwargs)
+        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sl", "b"], **kwargs)
         query_sql = f"""
-            SELECT sl.product_name, sl.product_code, sl.branch_id, sl.category
+            SELECT sl.product_name, sl.product_code, sl.branch_id, b.branch_name, sl.category
             FROM "{schema}".stock_ledger sl
+            JOIN "{schema}".branches b ON sl.branch_id = b.id
             WHERE sl.status = 'OUT'
         """
         if where_clause and where_clause != "1=1":
@@ -267,12 +293,13 @@ class InventoryRepository:
     # 3️⃣ Branch Stock Table
     @staticmethod
     def branch_stock_table(db, schema, **kwargs):
-        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sl"], **kwargs)
+        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sl", "b"], **kwargs)
         query_sql = f"""
-            SELECT sl.branch_id, sl.product_name, sl.category,
+            SELECT sl.branch_id, b.branch_name, sl.product_name, sl.category,
                    sl.assets_qty, sl.consumable_qty, sl.resell_qty,
                    sl.in_transit_qty, sl.reserved_qty, sl.status
             FROM "{schema}".stock_ledger sl
+            JOIN "{schema}".branches b ON sl.branch_id = b.id
             WHERE 1=1
         """
         if where_clause and where_clause != "1=1":
@@ -299,11 +326,13 @@ class InventoryRepository:
     # 5️⃣ Recent Stock Movements
     @staticmethod
     def stock_movements(db, schema, **kwargs):
-        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sml"], **kwargs)
+        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["sml", "b", "ip"], **kwargs)
         query_sql = f"""
-            SELECT sml.reference_type, sml.reference_id, sml.product_id, sml.branch_id,
+            SELECT sml.reference_type, sml.reference_id, sml.product_id, ip.product_name, sml.branch_id, b.branch_name,
                    sml.stock_type, sml.quantity_delta, sml.action, sml.created_by, sml.created_at
             FROM "{schema}".stock_movement_logs sml
+            LEFT JOIN "{schema}".branches b ON sml.branch_id = b.id
+            LEFT JOIN "{schema}".inventory_products ip ON sml.product_id = ip.id
             WHERE 1=1
         """
         if where_clause and where_clause != "1=1":
@@ -315,11 +344,12 @@ class InventoryRepository:
     # 6️⃣ Stock Transfers
     @staticmethod
     def stock_transfers_table(db, schema, **kwargs):
-        where_clause, params = apply_dashboard_filters(schema=schema, aliases=[], **kwargs)
+        where_clause, params = apply_dashboard_filters(schema=schema, aliases=["b"], **kwargs)
         query_sql = f"""
             SELECT sti.product_name, sti.assets_qty, sti.consumable_qty,
-                   sti.resell_qty, sti.source_branch_id
+                   sti.resell_qty, sti.source_branch_id, b.branch_name
             FROM "{schema}".stock_transfer_items sti
+            JOIN "{schema}".branches b ON sti.source_branch_id = b.id
             WHERE 1=1
         """
         if where_clause and where_clause != "1=1":

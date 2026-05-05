@@ -81,7 +81,7 @@ class HRMService:
                 """), params_u).fetchall()
             ],
             "salary_trend": [
-                {"year": r[0], "month": r[1], "salary": float(r[2])}
+                {"year": r[0], "month": r[1], "salary": float(r[2] or 0)}
                 for r in db.execute(text(f"""
                     SELECT ss.salary_year, ss.salary_month, SUM(ss.net_salary)
                     FROM "{schema}".hrm_salary_month ss
@@ -122,22 +122,22 @@ class HRMService:
             "employee_list": [
                 {
                     "employee_name": f"{r[0]} {r[1]}", "email": r[2], "phone": r[3],
-                    "role": r[4], "status": r[5], "created_at": r[6]
+                    "role": r[4], "status": r[5], "created_at": r[6], "branch": r[7]
                 }
                 for r in db.execute(text(f"""
-                    SELECT u.first_name, u.last_name, u.email, u.contact_number, r.name, u.status, u.created_at
+                    SELECT u.first_name, u.last_name, u.email, u.contact_number, r.name, u.status, u.created_at, b.branch_name
                     FROM "{schema}".users u
                     LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
+                    LEFT JOIN "{schema}".branches b ON ub.branch_id = b.id
                     JOIN "{schema}".roles r ON u.role_id = r.id
                     WHERE {where_u}
                     ORDER BY u.created_at DESC
-                    LIMIT 20
                 """), params_u).fetchall()
             ],
             "salary_slips": [
                 {
                     "employee_name": f"{r[0]} {r[1]}", "year": r[2], "month": r[3],
-                    "basic_salary": float(r[4]), "net_salary": float(r[5]), "payment_date": r[6]
+                    "basic_salary": float(r[4] or 0), "net_salary": float(r[5] or 0), "payment_date": r[6]
                 }
                 for r in db.execute(text(f"""
                     SELECT u.first_name, u.last_name, ss.salary_year, ss.salary_month, ss.basic_salary, ss.net_salary, ss.payment_date
@@ -168,7 +168,7 @@ class HRMService:
 
         results = {
             "unpaid_salary": [
-                {"employee": f"{r[0]} {r[1]}", "year": r[2], "month": r[3], "salary": float(r[4])}
+                {"employee": f"{r[0]} {r[1]}", "year": r[2], "month": r[3], "salary": float(r[4] or 0)}
                 for r in db.execute(text(f"""
                     SELECT u.first_name, u.last_name, ss.salary_year, ss.salary_month, ss.net_salary
                     FROM "{schema}".hrm_salary_month ss

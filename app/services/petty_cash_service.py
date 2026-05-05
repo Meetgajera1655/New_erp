@@ -95,23 +95,23 @@ class PettyCashService:
             "recent_requests": [
                 {
                     "request_id": r[0], "employee": r[1], "branch": r[2], "category": r[3],
-                    "requested_amount": float(r[4]), "approved_amount": float(r[5]), "status": r[6], "submitted_at": str(r[7]),
+                    "requested_amount": float(r[4] or 0), "approved_amount": float(r[5] or 0), "status": r[6], "submitted_at": str(r[7]),
                 }
                 for r in db.execute(text(f"""
                     SELECT 
                         pc.id, u.first_name, b.branch_name, pc.category,
                         pc.amount_requested, pc.approved_amount, pc.status, pc.submitted_at
                     FROM "{schema}".petty_cash_requests pc
-                    JOIN "{schema}".users u ON pc.requester_user_id = u.id
-                    JOIN "{schema}".branches b ON pc.requester_branch_id = b.id
-                    WHERE {where_pc}
+                    LEFT JOIN "{schema}".users u ON pc.requester_user_id = u.id
+                    LEFT JOIN "{schema}".branches b ON pc.requester_branch_id = b.id
+                    WHERE pc.status IN ('DRAFT', 'PENDING', 'APPROVED') AND {where_pc}
                     ORDER BY pc.submitted_at DESC
                     LIMIT 20
                 """), params).fetchall()
             ],
             "approved_payments": [
                 {
-                    "request_id": r[0], "paid_by": r[1], "category": r[2], "approved_amount": float(r[3]),
+                    "request_id": r[0], "paid_by": r[1], "category": r[2], "approved_amount": float(r[3] or 0),
                     "payment_mode": r[4], "transaction_ref": r[5], "payment_date": str(r[6]), "status": r[7],
                 }
                 for r in db.execute(text(f"""

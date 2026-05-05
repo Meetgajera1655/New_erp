@@ -59,7 +59,7 @@ class TaskRepository:
             SELECT COUNT(t.id)
             FROM {schema}.tasks t
             WHERE t.scheduled_date < CURRENT_DATE
-            AND t.status != 'COMPLETED'
+            AND t.status = 'OVERDUE'
         """
         if where_clause:
             query_sql += f" AND {where_clause}"
@@ -109,15 +109,14 @@ class TaskRepository:
     def technician_workload(db, schema, **kwargs):
         where_clause, params = apply_task_filters(alias="t", **kwargs)
         query_sql = f"""
-            SELECT u.first_name, COUNT(t.id)
+            SELECT tt.employee_name, COUNT(t.id)
             FROM {schema}.tasks t
-            JOIN {schema}.users u
-            ON t.created_by = u.id::varchar
+            JOIN {schema}.task_technicians tt ON t.id = tt.task_id AND tt.is_primary = TRUE
             WHERE 1=1
         """
         if where_clause:
             query_sql += f" AND {where_clause}"
-        query_sql += " GROUP BY u.first_name ORDER BY COUNT(t.id) DESC"
+        query_sql += " GROUP BY tt.employee_name ORDER BY COUNT(t.id) DESC"
 
         print("WHERE:", where_clause)
         print("PARAMS:", params)
@@ -206,17 +205,16 @@ class TaskRepository:
         where_clause, params = apply_task_filters(alias="t", **kwargs)
         query_sql = f"""
             SELECT 
-                u.first_name,
+                tt.employee_name,
                 t.scheduled_date,
                 COUNT(t.id)
             FROM {schema}.tasks t
-            JOIN {schema}.users u
-            ON t.created_by = u.id::varchar
+            JOIN {schema}.task_technicians tt ON t.id = tt.task_id AND tt.is_primary = TRUE
             WHERE 1=1
         """
         if where_clause:
             query_sql += f" AND {where_clause}"
-        query_sql += " GROUP BY u.first_name, t.scheduled_date HAVING COUNT(t.id) > 5"
+        query_sql += " GROUP BY tt.employee_name, t.scheduled_date HAVING COUNT(t.id) > 5"
 
         print("WHERE:", where_clause)
         print("PARAMS:", params)

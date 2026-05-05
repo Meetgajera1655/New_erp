@@ -21,20 +21,26 @@ class EmployeeService:
         # OPTIMIZATION: Combine multiple KPI aggregations into single queries
         # a. Metrics from users table
         user_metrics = db.execute(text(f"""
-            SELECT 
-                COUNT(*) AS total_active,
-                COALESCE(SUM(us.basic_salary), 0) AS payroll
-            FROM "{schema}".users u
-            LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
-            LEFT JOIN "{schema}".user_salary_details us ON u.id = us.user_id
-            WHERE u.is_active = TRUE AND {where_u}
+            WITH valid_users AS (
+                SELECT DISTINCT u.id, us.basic_salary
+                FROM "{schema}".users u
+                LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
+                LEFT JOIN "{schema}".user_salary_details us ON u.id = us.user_id
+                WHERE u.is_active = TRUE AND {where_u}
+            )
+            SELECT COUNT(id), COALESCE(SUM(basic_salary), 0) FROM valid_users
         """), params_u).fetchone()
 
         # b. Metrics from hiring_requests table
         hiring_metrics = db.execute(text(f"""
-            SELECT COUNT(*) 
+            SELECT COUNT(DISTINCT hr.id) 
             FROM "{schema}".hiring_requests hr
-            LEFT JOIN "{schema}".user_branches ub ON hr.created_by::BIGINT = ub.user_id
+            LEFT JOIN "{schema}".users hr_u ON (
+                (hr.created_by ~ '^[0-9]+$' AND hr_u.id = hr.created_by::BIGINT)
+                OR hr_u.email = hr.created_by
+                OR hr_u.first_name || ' ' || hr_u.last_name = hr.created_by
+            )
+            LEFT JOIN "{schema}".user_branches ub ON hr_u.id = ub.user_id
             WHERE hr.status = 'PENDING' AND {where_hr}
         """), params_hr).scalar()
 
@@ -42,7 +48,7 @@ class EmployeeService:
         dept_dist = [
             {"department": r[0], "count": r[1]}
             for r in db.execute(text(f"""
-                SELECT u.department, COUNT(*)
+                SELECT u.department, COUNT(DISTINCT u.id)
                 FROM "{schema}".users u
                 LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
                 WHERE {where_u}
@@ -74,9 +80,14 @@ class EmployeeService:
             "hiring_pipeline": [
                 {"status": r[0], "count": r[1]}
                 for r in db.execute(text(f"""
-                    SELECT hr.status, COUNT(*)
+                    SELECT hr.status, COUNT(DISTINCT hr.id)
                     FROM "{schema}".hiring_requests hr
-                    LEFT JOIN "{schema}".user_branches ub ON hr.created_by::BIGINT = ub.user_id
+                    LEFT JOIN "{schema}".users hr_u ON (
+                        (hr.created_by ~ '^[0-9]+$' AND hr_u.id = hr.created_by::BIGINT)
+                        OR hr_u.email = hr.created_by
+                        OR hr_u.first_name || ' ' || hr_u.last_name = hr.created_by
+                    )
+                    LEFT JOIN "{schema}".user_branches ub ON hr_u.id = ub.user_id
                     WHERE {where_hr}
                     GROUP BY hr.status
                 """), params_hr).fetchall()
@@ -84,7 +95,7 @@ class EmployeeService:
             "employment_type": [
                 {"type": r[0], "count": r[1]}
                 for r in db.execute(text(f"""
-                    SELECT u.employment_type, COUNT(*)
+                    SELECT u.employment_type, COUNT(DISTINCT u.id)
                     FROM "{schema}".users u
                     LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
                     WHERE {where_u}
@@ -94,7 +105,7 @@ class EmployeeService:
             "onboarding_trend": [
                 {"date": str(r[0]), "count": r[1]}
                 for r in db.execute(text(f"""
-                    SELECT DATE(u.date_of_joining), COUNT(*)
+                    SELECT DATE(u.date_of_joining), COUNT(DISTINCT u.id)
                     FROM "{schema}".users u
                     LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
                     WHERE {where_u}
@@ -125,9 +136,14 @@ class EmployeeService:
                     "positions": r[3], "expected_joining": str(r[4])
                 }
                 for r in db.execute(text(f"""
-                    SELECT hr.id, hr.department, hr.designation, hr.number_of_positions, hr.expected_date_of_joining
+                    SELECT DISTINCT hr.id, hr.department, hr.designation, hr.number_of_positions, hr.expected_date_of_joining
                     FROM "{schema}".hiring_requests hr
-                    LEFT JOIN "{schema}".user_branches ub ON hr.created_by::BIGINT = ub.user_id
+                    LEFT JOIN "{schema}".users hr_u ON (
+                        (hr.created_by ~ '^[0-9]+$' AND hr_u.id = hr.created_by::BIGINT)
+                        OR hr_u.email = hr.created_by
+                        OR hr_u.first_name || ' ' || hr_u.last_name = hr.created_by
+                    )
+                    LEFT JOIN "{schema}".user_branches ub ON hr_u.id = ub.user_id
                     WHERE hr.number_of_positions > 5 AND {where_hr}
                     LIMIT 20
                 """), params_hr).fetchall()
@@ -138,7 +154,7 @@ class EmployeeService:
                     "salary_type": r[3], "basic": float(r[4] or 0), "hra": float(r[5] or 0), "deductions": float(r[6] or 0)
                 }
                 for r in db.execute(text(f"""
-                    SELECT u.emp_id, u.first_name, u.department, s.salary_type, s.basic_salary, s.hra, s.deductions
+                    SELECT DISTINCT u.emp_id, u.first_name, u.department, s.salary_type, s.basic_salary, s.hra, s.deductions
                     FROM "{schema}".users u
                     LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
                     JOIN "{schema}".user_salary_details s ON u.id = s.user_id
@@ -169,16 +185,21 @@ class EmployeeService:
                     "expected_joining": str(r[3]), "status": r[4]
                 }
                 for r in db.execute(text(f"""
-                    SELECT hr.id, hr.department, hr.designation, hr.expected_date_of_joining, hr.status
+                    SELECT DISTINCT hr.id, hr.department, hr.designation, hr.expected_date_of_joining, hr.status
                     FROM "{schema}".hiring_requests hr
-                    LEFT JOIN "{schema}".user_branches ub ON hr.created_by::BIGINT = ub.user_id
+                    LEFT JOIN "{schema}".users hr_u ON (
+                        (hr.created_by ~ '^[0-9]+$' AND hr_u.id = hr.created_by::BIGINT)
+                        OR hr_u.email = hr.created_by
+                        OR hr_u.first_name || ' ' || hr_u.last_name = hr.created_by
+                    )
+                    LEFT JOIN "{schema}".user_branches ub ON hr_u.id = ub.user_id
                     WHERE hr.expected_date_of_joining < CURRENT_DATE AND hr.status != 'CONVERTED' AND {where_hr}
                 """), params_hr).fetchall()
             ],
             "low_leave_balance": [
                 {"user_id": r[0], "casual_leave": r[1], "sick_leave": r[2]}
                 for r in db.execute(text(f"""
-                    SELECT l.user_id, l.casual_leave, l.sick_leave
+                    SELECT DISTINCT l.user_id, l.casual_leave, l.sick_leave
                     FROM "{schema}".user_leave_details l
                     JOIN "{schema}".users u ON l.user_id = u.id
                     LEFT JOIN "{schema}".user_branches ub ON u.id = ub.user_id
